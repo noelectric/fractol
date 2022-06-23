@@ -1,162 +1,72 @@
-#include <mlx.h>
-#include <stdio.h>
-#include <unistd.h>
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   julia.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yimzaoua <yimzaoua@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/06/22 02:27:51 by yimzaoua          #+#    #+#             */
+/*   Updated: 2022/06/23 20:35:58 by yimzaoua         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-typedef struct s_var
+#include "../include/fractol.h"
+
+int	check_iteration(int itr, float x, float y, t_cord cord)
 {
-	//IMAGE VAR
-	void	*img;
-	char	*addr;
-	int		bits_per_pixel;
-	int		line_length;
-	int		endian;
-	int		color;
-	void	*ptr;
-	void	*mlx_win;
-	double	x;
-	double	y;
-	//WINDOWS DEMENSIONS
-	int		size_x;
-	int		size_y;
-	//MAP DEMENSION
-	double	xp;
-	double	xn;
-	double	yp;
-	double	yn;
-	double	xm;
-	double	ym;
-	// Sequence variables
-	int		itteration;
-	// double	zp;
-	// double	zn;
-}	t_var;
-
-// int	ft_close ()
-// {
-// 	exit(0);
-// }
-
-int	result (t_var *var,float x, float y)
-{
-	int	itteration;
-	double	zp;
-	double	zn;
-	double	tmp;
-
-	itteration = 0;
-	zp = x;
-	zn = y;
-	while (itteration < var->itteration && (zp*zp + zn*zn) < 4)
-	{
-		tmp = zp;
-		zp = zp*zp - zn*zn + var->x;
-		zn = 2 * tmp * zn + var->y;
-		itteration = itteration + 2;
-	}
-	return (itteration);
-}
-
-
-void	draw_julia(t_var *var)
-{
-	int	i;
-	int	j;
-	int	res;
-	int	*position;
-
+	int		i;
+	t_cord	z;
+	double	old_real_nbr;
 
 	i = 0;
+	z.x = x;
+	z.y = y;
+	while ((i < itr) && ((z.x * z.x + z.y * z.y) <= 4))
+	{
+		old_real_nbr = z.x;
+		z.x = (z.x * z.x) - (z.y * z.y) + cord.x;
+		z.y = (2 * old_real_nbr * z.y) + cord.y;
+		i = i + 2;
+	}
+	return (i);
+}
+
+void		draw_julia(t_var *var)
+{
+	int			i;
+	int			j;
+	int			res;
+	t_cord		cord;
+
 	j = 0;
-	while (j < var->size_y)
+	while (j <= 500)
 	{
 		i = 0;
-		var->ym = var->yn + j * (var->yp - var->yn) / var->size_y;
-		while (i < var->size_x)
+		cord.y = var->min.y + (j * (var->max.y - var->min.y)) / 500;
+		while (i <= 500)
 		{
-			var->xm = var->xn + i * (var->xp - var->xn) / var->size_x;
-			//-------------
-			res = result(var,var->xm,var->ym);
-			//----------
-			position = (int *)(var->addr + (j * 2000 + i * 4));
-			if (var->itteration != res)
-				*position = res * var->color;
+			cord.x = var->min.x + (i * (var->max.x - var->min.x)) / 500;
+			res = check_iteration(var->itr, cord.x, cord.y, var->zoom);
+			if (res != var->itr)
+				var->mlx_addr[(j * 500) + i] = res * var->color;
 			else
-				*position = 0x00000000;
+				var->mlx_addr[(j * 500) + i] = 0x000000;
 			i++;
 		}
 		j++;
 	}
 }
 
-void	clear_and_draw(t_var *fr)
+int			ft_julia(t_var *var)
 {
-	mlx_destroy_image(fr->ptr, fr->img);
-	fr->img = mlx_new_image(fr->ptr, 500, 500);
-	mlx_clear_window(fr->ptr, fr->mlx_win);
-	draw_julia(fr);
-	mlx_put_image_to_window(fr->ptr, fr->mlx_win, fr->img, 0, 0);
-}
-
-void	mouse_move(int x, int y, t_var *var)
-{
-	if (var->bits_per_pixel)
-	{
-		var->x = var->xn + (double) x * (var->xp - var->xn) / var->size_x;
-		var->y = var->yn + (double) y * (var->yp - var->yn) / var->size_y;
-		clear_and_draw(var);
-	}
-}
-
-int	mouse_hook(int keycode, int x, int y, t_var *var)
-{
-	t_var	cord;
-	cord.xp = var->xn + (double)x * (var->xp - var->xn) / var->size_x;
-	cord.yp = var->yn + (double)y * (var->yp - var->yn) / var->size_y;
-	if (keycode == 4)
-	{
-		var->itteration += 2;
-		var->xp = cord.xp + (var->xp - cord.xp) * 0.9;
-		var->xn = cord.xp + (var->xn - cord.xp) * 0.9;
-		var->yp = cord.yp + (var->yp - cord.yp) * 0.9;
-		var->yn = cord.yp + (var->yn - cord.yp) * 0.9;
-	}
-	if (keycode == 5)
-	{
-		var->itteration -= 2;
-		var->xp = cord.xp + (var->xp - cord.xp) * 1.1;
-		var->xn = cord.xp + (var->xn - cord.xp) * 1.1;
-		var->yp = cord.yp + (var->yp - cord.yp) * 1.1;
-		var->yn = cord.yp + (var->yn - cord.yp) * 1.1;
-	}
-	clear_and_draw(var);
-	return 0;
-}
-
-int main(void)
-{
-	t_var	var;
-
-	var.xp = 2;
-	var.xn = -2;
-	var.yp = 2;
-	var.yn = -2;
-	var.x = 0.285;
-	var.y = 0.01;
-	var.color = 0xFFFFFF;
-	var.itteration = 250;
-	var.ptr = mlx_init();
-	var.size_x = 500;
-	var.size_y = 500;
-	var.x = -0.7269;
-	var.y = 0.01;
-	var.mlx_win = mlx_new_window(var.ptr, var.size_x, var.size_y, "Fractal");
-	var.img = mlx_new_image(var.ptr, var.size_x, var.size_y);
-	var.addr = mlx_get_data_addr(var.img, &var.bits_per_pixel, &var.line_length, &var.endian);
-
-	draw_julia(&var);
-
-	mlx_put_image_to_window(var.ptr, var.mlx_win, var.img, 0, 0);
-	mlx_hook(var.mlx_win, 6, 0, &mouse_move, &var);
-	mlx_hook(var.mlx_win, 4, 0, &mouse_hook, &var);
-	mlx_loop(var.ptr);
+	var->zoom.x = 0.285;
+	var->zoom.y = 0.01;
+	var->max.x = 2;
+	var->min.x = -2;
+	var->max.y = 2;
+	var->min.y = -2;
+	var->itr = 250;
+	var->bpp = 1;
+	draw_julia(var);
+	return (0);
 }

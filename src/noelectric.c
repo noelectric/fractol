@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   mandelbrot.c                                       :+:      :+:    :+:   */
+/*   noelectric.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: yimzaoua <yimzaoua@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/06/22 02:16:49 by yimzaoua          #+#    #+#             */
-/*   Updated: 2022/06/23 21:07:01 by yimzaoua         ###   ########.fr       */
+/*   Created: 2022/06/23 21:05:27 by yimzaoua          #+#    #+#             */
+/*   Updated: 2022/06/23 21:13:52 by yimzaoua         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,13 +25,13 @@ static int	check_iteration(int itr, float x, float y)
 	{
 		tmp = z.x;
 		z.x = (z.x * z.x) - (z.y * z.y) + x;
-		z.y = (2 * tmp * z.y) + y;
+		z.y = fabs(2 * tmp * z.y) + y;
 		i++;
 	}
 	return (i);
 }
 
-void		draw_mandelbrot(t_var *fr)
+void		draw_noelectric(t_var *fr)
 {
 	int			i;
 	int			j;
@@ -57,13 +57,14 @@ void		draw_mandelbrot(t_var *fr)
 	}
 }
 
-int			ft_mandelbrot(t_var *var)
+int	ft_noelectric(t_var *var)
 {
 	var->max.x = 2;
 	var->min.x = -2;
 	var->max.y = 2;
 	var->min.y = -2;
 	var->itr = 250;
-	draw_mandelbrot(var);
-	return (0);
+	var->bpp = 1;
+	draw_noelectric(var);
+	return (1);
 }
